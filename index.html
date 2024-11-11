@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cube Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: lightgrey; /* Set background color to light grey */
+        }
+        #mainMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameTitle {
+            color: red; /* Set heading color to red */
+            margin-bottom: 20px;
+        }
+        #menuHighScore {
+            font-size: 1.5em;
+            color: rgb(16, 20, 231); /* Set high score color to yellow */
+            margin-bottom: 20px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: red;
+            display: none;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 1.5em;
+            color: yellow; /* Set score color to yellow */
+            display: none;
+        }
+        #highScore {
+            position: absolute;
+            top: 40px; /* Adjusted to show below the score */
+            left: 10px;
+            font-size: 1.5em;
+            color: yellow; /* Set high score color to yellow */
+            display: none;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="mainMenu">
+        <div id="gameTitle">Cube Dodge 3D!</div>
+        <div id="menuHighScore">High Score: 0</div>
+        <button id="startButton">Start Game</button>
+    </div>
+    <div id="gameOver">Game Over!</div>
+    <div id="score">Score: 0</div>
+    <div id="highScore">High Score: 0</div>
+    <script>
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create the green cube
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        // Create red cubes as obstacles
+        const obstacleGeometry = new THREE.BoxGeometry();
+        const obstacleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const obstacles = [];
+
+        function createObstacle() {
+            const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+            obstacle.position.set(cube.position.x + (Math.random() * 20  - 20), 0, cube.position.z - 70); // Fixed distance in front of the green cube
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        // Generate obstacles at HIGHER intervals
+        let obstacleInterval;
+        let obstacleIntervalTime = 200; // change back to 2000 if it doesn't work
+
+        // Position the camera diagonally
+        camera.position.set(5, 5, 5);
+        camera.lookAt(cube.position);
+
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') || 0;
+        document.getElementById('highScore').innerText = `High Score: ${highScore}`;
+        document.getElementById('menuHighScore').innerText = `High Score: ${highScore}`;
+
+        let speed = 0.1;
+
+        // Increase speed every second
+        let speedInterval;
+
+        // Movement flags
+        let moveLeft = false;
+        let moveRight = false;
+
+        // Check for collisions
+        function checkCollisions() {
+            for (const obstacle of obstacles) {
+                const distance = cube.position.distanceTo(obstacle.position);
+                if (distance < 1) {
+                    document.getElementById('gameOver').style.display = 'block';
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('highScore', highScore);
+                    }
+                    clearInterval(obstacleInterval);
+                    clearInterval(speedInterval);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Animation loop
+        function animate() {
+            if (!checkCollisions()) {
+                requestAnimationFrame(animate);
+
+                // Automatically move the cube forward
+                cube.position.z -= speed;
+                score++;
+                document.getElementById('score').innerText = `Score: ${score}`;
+
+                // Increase obstacle generation speed every 1000 points
+                if (score % 1000 === 0 && score !== 0) {
+                    clearInterval(obstacleInterval);
+                    obstacleIntervalTime = Math.max(100, obstacleIntervalTime - 50); // Decrease interval time, minimum 100ms
+                    obstacleInterval = setInterval(createObstacle, obstacleIntervalTime);
+                }
+
+                // Move the cube left or right
+                if (moveLeft) cube.position.x -= 0.1;
+                if (moveRight) cube.position.x += 0.1;
+
+                // Move the camera with the cube
+                camera.position.z = cube.position.z + 5;
+                camera.position.x = cube.position.x + 5;
+                camera.position.y = cube.position.y + 5;
+                camera.lookAt(cube.position);
+
+                renderer.render(scene, camera);
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('score').style.display = 'block';
+            document.getElementById('highScore').style.display = 'block';
+            obstacleInterval = setInterval(createObstacle, obstacleIntervalTime);
+            speedInterval = setInterval(() => {
+                speed += 0.01;
+            }, 1000);
+            animate();
+        }
+
+        document.getElementById('startButton').addEventListener('click', startGame);
+
+        // Add keyboard controls
+        document.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowLeft':
+                    moveLeft = true;
+                    break;
+                case 'ArrowRight':
+                    moveRight = true;
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            switch (event.key) {
+                case 'ArrowLeft':
+                    moveLeft = false;
+                    break;
+                case 'ArrowRight':
+                    moveRight = false;
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
