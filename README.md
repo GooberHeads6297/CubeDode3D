@@ -6,3 +6,4 @@ Link to play in your browser:
 
 https://gooberheads6297.github.io/CubeDode3D/
 
+Use Arrow Keys to move around!
