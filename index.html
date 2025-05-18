@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>3D Cube Game</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#008000"/>
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png"> <!-- Basic Apple touch icon -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
@@ -65,6 +68,29 @@
             border: none;
             border-radius: 5px;
         }
+        #mobileControls {
+            position: absolute;
+            bottom: 30px; /* Increased bottom margin */
+            left: 0;
+            width: 100%;
+            display: none; /* Initially hidden */
+            justify-content: space-between;
+            padding: 0 30px; /* Increased padding for better spacing from edges */
+            box-sizing: border-box;
+            z-index: 10; /* Ensure controls are on top */
+        }
+        .control-button {
+            padding: 20px 25px; /* Adjusted padding */
+            font-size: 1.8em; /* Larger font for better readability */
+            background-color: rgba(0, 100, 0, 0.7); /* Darker, semi-transparent green */
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5); /* Subtle border */
+            border-radius: 10px;
+            width: 120px; /* Slightly wider buttons */
+            text-align: center;
+            touch-action: manipulation; /* Prevents zoom/scroll on tap */
+            user-select: none; /* Prevents text selection */
+        }
     </style>
 </head>
 <body>
@@ -76,6 +102,10 @@
     <div id="gameOver">Game Over!</div>
     <div id="score">Score: 0</div>
     <div id="highScore">High Score: 0</div>
+    <div id="mobileControls">
+        <button id="leftButton" class="control-button">&lt;</button>
+        <button id="rightButton" class="control-button">&gt;</button>
+    </div>
     <script>
         // Set up the scene, camera, and renderer
         const scene = new THREE.Scene();
@@ -181,6 +211,7 @@
             document.getElementById('mainMenu').style.display = 'none';
             document.getElementById('score').style.display = 'block';
             document.getElementById('highScore').style.display = 'block';
+            document.getElementById('mobileControls').style.display = 'flex'; // Show mobile controls
             obstacleInterval = setInterval(createObstacle, obstacleIntervalTime);
             speedInterval = setInterval(() => {
                 speed += 0.01;
@@ -212,6 +243,43 @@
                     break;
             }
         });
+
+        // Add touch controls for mobile
+        const leftButton = document.getElementById('leftButton');
+        const rightButton = document.getElementById('rightButton');
+
+        leftButton.addEventListener('touchstart', (event) => {
+            event.preventDefault(); // Prevent default touch behavior (like scrolling or zooming)
+            moveLeft = true;
+        });
+        leftButton.addEventListener('touchend', (event) => {
+            event.preventDefault();
+            moveLeft = false;
+        });
+
+        rightButton.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            moveRight = true;
+        });
+        rightButton.addEventListener('touchend', (event) => {
+            event.preventDefault();
+            moveRight = false;
+        });
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+
     </script>
 </body>
 </html>
