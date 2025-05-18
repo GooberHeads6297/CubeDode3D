@@ -4,6 +4,6 @@ A simple game I made about a year ago where you can dodge cubes and get a high s
 
 Link to play in your browser:
 
-https://gooberheads6297.github.io/CubeDode3D/
+[https://gooberheads6297.github.io/CubeDode3D/](https://gooberheads6297.github.io/CubeDode3D/)
 
 Use Arrow Keys to move around!
